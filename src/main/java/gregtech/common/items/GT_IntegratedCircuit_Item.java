@@ -10,11 +10,13 @@ import gregtech.api.items.GT_Generic_Item;
 import gregtech.api.util.GT_LanguageManager;
 import gregtech.api.util.GT_Log;
 import gregtech.api.util.GT_ModHandler;
+import gregtech.api.util.GT_Utility;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 
 import java.util.List;
 
@@ -86,6 +88,32 @@ public class GT_IntegratedCircuit_Item extends GT_Generic_Item {
         return getUnlocalizedName();
     }
 
+    @Override
+    public ItemStack onItemRightClick(ItemStack aStack, World aWorld, EntityPlayer aPlayer) {
+        if(aWorld.isRemote||!useScrewdriver(aPlayer))
+            return super.onItemRightClick(aStack,aWorld,aPlayer);
+        int tConfig = getDamage(aStack);
+        if(aPlayer.isSneaking())
+            tConfig--;
+        else
+            tConfig++;
+        if(tConfig<0)
+            tConfig = 0;
+        if(tConfig>24)
+            tConfig = 24;
+        aStack.setItemDamage(tConfig);
+        GT_Utility.sendChatToPlayer(aPlayer,"Integrated Circuit config is: "+tConfig);
+        return super.onItemRightClick(aStack, aWorld, aPlayer);
+    }
+
+    public static boolean useScrewdriver(EntityPlayer aPlayer){
+        for(ItemStack aStack : aPlayer.inventory.mainInventory){
+            if (GT_Utility.isStackInList(aStack, GregTech_API.sScrewdriverList) && GT_ModHandler.damageOrDechargeItem(aStack, 1, 1000, aPlayer))
+                return true;
+        }
+        return false;
+    }
+    
     @SideOnly(Side.CLIENT)
     public final void getSubItems(Item var1, CreativeTabs aCreativeTab, List aList) {
         aList.add(new ItemStack(this, 1, 0));
